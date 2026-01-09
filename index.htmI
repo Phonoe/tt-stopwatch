@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>TT Stopwatch – Stable iPad Admin FIXED</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;padding:20px;color:#222}
+h2,h3,h4{text-align:center}
+
+button{
+  padding:6px 12px;
+  margin:4px;
+  border-radius:6px;
+  border:1px solid #cfd6df;
+  background:#fff;
+  cursor:pointer
+}
+button:hover{background:#eef2ff}
+
+.table-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ตาราง */
+.main-table{
+  width:1200px;margin:14px auto;border-collapse:collapse;
+  table-layout:fixed;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.08)
+}
+.rank-table{
+  width:900px;margin:14px auto;border-collapse:collapse;
+  table-layout:fixed;background:#f8fbff;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)
+}
+
+th,td{
+  border:1px solid #d1d5db;
+  padding:6px 4px;
+  font-size:12px;
+  text-align:center;
+  white-space:nowrap
+}
+th{background:#dbeafe;color:#1e3a8a;font-weight:700}
+
+/* input */
+input{
+  width:100%;
+  box-sizing:border-box;
+  font-size:12px;
+  padding:3px 4px;
+  border:1px solid #cfd6df;
+  border-radius:4px
+}
+.time-input{width:36px;text-align:center}
+.race-time{font-weight:600;color:#1e40af}
+
+#intervalMin,#intervalSec{width:60px;text-align:center}
+
+/* กล่องปุ่ม admin */
+#adminButtons{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-bottom:8px;
+}
+
+/* iPad */
+@media (max-width:1024px){
+  th,td{font-size:14px}
+  input{font-size:14px}
+  button{font-size:16px;padding:8px 14px}
+  .time-input{width:44px;font-size:16px}
+  input,button{touch-action:manipulation}
+}
+
+/* ปุ่ม + - */
+.main-table button{
+  padding:2px 6px;
+  font-size:12px;
+  margin:2px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🚴‍♂️ Time Trial – Stopwatch</h2>
+
+<p style="text-align:center">
+🚦 ปล่อยตัวห่าง
+<input type="number" id="intervalMin" value="1"> นาที
+<input type="number" id="intervalSec" value="0"> วินาที
+</p>
+
+<!-- 🔥 ปุ่ม admin แสดงตลอด -->
+<div id="adminButtons">
+  <button class="admin-only" onclick="addRider()">➕ เพิ่มนักกีฬา</button>
+  <button class="admin-only" onclick="removeRider()">➖ ลบนักกีฬา</button>
+  <button class="admin-only" onclick="addCP()">➕ Checkpoint</button>
+  <button class="admin-only" onclick="removeCP()">➖ Checkpoint</button>
+</div>
+
+<div class="table-wrapper">
+<table class="main-table">
+<thead>
+<tr id="headerRow"></tr>
+<tr id="subHeaderRow"></tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+</div>
+
+<h3>📊 Ranking</h3>
+<div id="rankArea"></div>
+
+<script>
+/* ===== MODE ===== */
+const params=new URLSearchParams(location.search);
+const isAdmin=params.get("mode")==="admin";
+
+/* ===== DATA ===== */
+let riders=[];
+let cps=[{name:""}];
+
+function format(sec){
+  if(sec==null||isNaN(sec))return"";
+  const m=Math.floor(sec/60);
+  const s=Math.floor(sec%60);
+  return m+":"+String(s).padStart(2,'0')
+}
+
+/* ===== CRUD ===== */
+function addRider(){
+  riders.push({bib:"",name:"",team:"",cps:cps.map(()=>({m:"",s:""}))});
+  render()
+}
+function removeRider(){if(riders.length)riders.pop();render()}
+function addCP(){
+  cps.push({name:""});
+  riders.forEach(r=>r.cps.push({m:"",s:""}));
+  render()
+}
+function removeCP(){
+  if(cps.length>1){
+    cps.pop();
+    riders.forEach(r=>r.cps.pop());
+    render()
+  }
+}
+
+/* + / - วินาที */
+function incSec(ri,ci){
+  let t=riders[ri].cps[ci];
+  t.s=(+t.s||0)+1;
+  if(t.s>=60){t.s=0;t.m=(+t.m||0)+1}
+  render()
+}
+function decSec(ri,ci){
+  let t=riders[ri].cps[ci];
+  t.s=Math.max((+t.s||0)-1,0);
+  render()
+}
+
+/* ===== RENDER ===== */
+function render(){
+  headerRow.innerHTML=subHeaderRow.innerHTML=table.innerHTML="";
+
+  headerRow.innerHTML+='<th rowspan="2">BIB</th><th rowspan="2">ชื่อ</th><th rowspan="2">ทีม</th><th rowspan="2">Gap</th>';
+  cps.forEach((cp,i)=>{
+    headerRow.innerHTML+=`<th colspan="2">CP${i+1}<br>
+    <input value="${cp.name}" ${!isAdmin?"disabled":""}
+    onchange="cps[${i}].name=this.value;render()"></th>`;
+    subHeaderRow.innerHTML+='<th>Time</th><th>Race</th>';
+  });
+
+  const gap=(+intervalMin.value||0)*60+(+intervalSec.value||0);
+
+  riders.forEach((r,ri)=>{
+    const g=ri*gap;
+    let row=`<tr>
+    <td><input value="${r.bib}" ${!isAdmin?"disabled":""}
+    onchange="riders[${ri}].bib=this.value;render()"></td>
+    <td><input value="${r.name}" ${!isAdmin?"disabled":""}
+    onchange="riders[${ri}].name=this.value;render()"></td>
+    <td><input value="${r.team}" ${!isAdmin?"disabled":""}
+    onchange="riders[${ri}].team=this.value;render()"></td>
+    <td>${format(g)}</td>`;
+
+    r.cps.forEach((t,ci)=>{
+      const total=t.m!==""&&t.s!==""?(+t.m*60+ +t.s - g):null;
+      row+=`
+      <td>
+        <input class="time-input" value="${t.m}" ${!isAdmin?"disabled":""}
+        onchange="riders[${ri}].cps[${ci}].m=this.value;render()"> :
+        <input class="time-input" value="${t.s}" ${!isAdmin?"disabled":""}
+        onchange="riders[${ri}].cps[${ci}].s=this.value;render()">
+        ${isAdmin?`
+        <div>
+          <button onclick="incSec(${ri},${ci})">＋</button>
+          <button onclick="decSec(${ri},${ci})">−</button>
+        </div>`:""}
+      </td>
+      <td class="race-time">${format(total)}</td>`;
+    });
+
+    row+='</tr>';
+    table.innerHTML+=row;
+  });
+
+  // 🔐 ซ่อนเฉพาะปุ่ม admin สำหรับ viewer
+  document.querySelectorAll(".admin-only").forEach(b=>{
+    b.style.display=isAdmin?"":"none";
+  });
+
+  renderRank();
+}
+
+/* ===== RANK ===== */
+function renderRank(){
+  rankArea.innerHTML="";
+  const gap=(+intervalMin.value||0)*60+(+intervalSec.value||0);
+
+  cps.forEach((cp,ci)=>{
+    let arr=[];
+    riders.forEach((r,ri)=>{
+      const t=r.cps[ci];
+      if(t.m===""||t.s==="")return;
+      const sec=+t.m*60+ +t.s - ri*gap;
+      if(sec>=0)arr.push({bib:r.bib,name:r.name,team:r.team,raw:format(+t.m*60+ +t.s),sec})
+    });
+    arr.sort((a,b)=>a.sec-b.sec);
+
+    let rows="";
+    arr.forEach((r,i)=>{
+      rows+=`<tr>
+      <td>${i+1}</td><td>${r.bib}</td><td>${r.name}</td><td>${r.team}</td>
+      <td>${r.raw}</td><td>${format(r.sec)}</td>
+      <td>${i?"+"+format(r.sec-arr[0].sec):"-"}</td>
+      <td>${i?"+"+format(r.sec-arr[i-1].sec):"-"}</td>
+      </tr>`
+    });
+
+    rankArea.innerHTML+=`
+    <h4>CP${ci+1} ${cp.name?`(${cp.name})`:""}</h4>
+    <table class="rank-table">
+    <tr><th>อันดับ</th><th>BIB</th><th>ชื่อ</th><th>ทีม</th>
+    <th>Time</th><th>Race</th><th>Gap Leader</th><th>Gap Prev</th></tr>
+    ${rows}</table>`;
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
