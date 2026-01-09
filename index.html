@@ -81,9 +81,7 @@ input{
   margin:2px;
 }
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 </style>
 </head>
 
@@ -118,6 +116,10 @@ input{
 <h3>📊 Ranking</h3>
 <div id="rankArea"></div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
 
 // Firebase config
@@ -133,7 +135,25 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const database = firebase.database();
+console.log("Firebase initialized");
+
+// Firebase path
+const dataRef = database.ref("race");
+
+dataRef.on("value", (snapshot) => {
+  const data = snapshot.val();
+  console.log("Firebase snapshot:", data);
+
+  if (!data) return;
+
+  cps = data.cps || [];
+  riders = data.riders || [];
+
+  render();
+});
+
+
 
 /* ===== MODE ===== */
 const params=new URLSearchParams(location.search);
@@ -184,6 +204,7 @@ function decSec(ri,ci){
 
 /* ===== RENDER ===== */
 function render(){
+console.log("render called", cps, riders);
   headerRow.innerHTML=subHeaderRow.innerHTML=table.innerHTML="";
 
   headerRow.innerHTML+='<th rowspan="2">BIB</th><th rowspan="2">ชื่อ</th><th rowspan="2">ทีม</th><th rowspan="2">Gap</th>';
