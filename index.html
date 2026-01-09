@@ -80,6 +80,10 @@ input{
   font-size:12px;
   margin:2px;
 }
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </style>
 </head>
 
@@ -115,6 +119,22 @@ input{
 <div id="rankArea"></div>
 
 <script>
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBhGD8QUxWeYWJ09ALC2pHb20iGvP1EfXk",
+  authDomain: "myteamapp-8d618.firebaseapp.com",
+  databaseURL: "https://myteamapp-8d618-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "myteamapp-8d618",
+  storageBucket: "myteamapp-8d618.firebasestorage.app",
+  messagingSenderId: "381011189042",
+  appId: "1:381011189042:web:67db84b03ea9dd7263cb2b"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 /* ===== MODE ===== */
 const params=new URLSearchParams(location.search);
 const isAdmin=params.get("mode")==="admin";
