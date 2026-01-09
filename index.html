@@ -255,6 +255,8 @@ console.log("render called", cps, riders);
   });
 
   renderRank();
+
+if (isAdmin) commitChange();
 }
 
 /* ===== RANK ===== */
@@ -292,6 +294,21 @@ function renderRank(){
 }
 
 render();
+
+let saveTimer = null;
+
+function commitChange() {
+  if (!isAdmin) return;
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    database.ref("race").set({
+      cps: cps,
+      riders: riders
+    });
+    console.log("Saved to Firebase");
+  }, 300); // หน่วง 300ms กัน spam
+}
 </script>
 
 </body>
