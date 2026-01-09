@@ -216,6 +216,7 @@ function decSec(ri,ci){
 }
 
 /* ===== RENDER ===== */
+
 function render(){
 console.log("render called", cps, riders);
   headerRow.innerHTML=subHeaderRow.innerHTML=table.innerHTML="";
@@ -306,6 +307,23 @@ function renderRank(){
 }
 
 render();
+
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Tab") return;
+
+  const inputs = Array.from(document.querySelectorAll(".timeInput"));
+  const index = inputs.indexOf(document.activeElement);
+  if(index === -1) return;
+
+  e.preventDefault(); // กัน tab หลุดออกนอกตาราง
+
+  let next = index + (e.shiftKey ? -1 : 1);
+  if(next < 0) next = inputs.length - 1;
+  if(next >= inputs.length) next = 0;
+
+  inputs[next].focus();
+  inputs[next].select();
+});
 
 </script>
 
