@@ -251,8 +251,7 @@ console.log("render called", cps, riders);
         onchange="riders[${ri}].cps[${ci}].s=this.value;render()">
         ${isAdmin?`
         <div>
-          <button onclick="incSec(${ri},${ci})">＋</button>
-          <button onclick="decSec(${ri},${ci})">−</button>
+        
         </div>`:""}
       </td>
       <td class="race-time">${format(total)}</td>`;
